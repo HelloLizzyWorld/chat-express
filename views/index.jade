@@ -1,0 +1,15 @@
+extends layout 
+
+block content
+  div.container
+    p 💌 CHAT EXPRESS 💌
+    ul#messages
+    div.inputContainer
+      form
+        input(id="msgInput" placeholder="      typing something !" type="text")
+        button SEND
+
+block script
+  script(src="/socket.io/socket.io.js")
+  //- script(src="http://code.jquery.com/jquery-1.11.1.js")
+  script(src="/javascripts/index.js")
