@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   const socket = io(); // socket 연결
   let name = prompt("이름을 입력해주세요");
-
   if (!name) {
     // 이름 입력을 하지 않은 경우 랜덤으로 참여
     let randomStr = Math.random().toString(36).substring(2, 8);

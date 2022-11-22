@@ -65,7 +65,7 @@ app.io.on("connection", (socket) => {
     // 'updateMessage'의 데이터 구조에 맞게 name값 담아서 'updateMessage' 호출
     if (sender_id === "ALL") {
       // 모두에게
-      app.io.emit("updateMessage", data);
+      app.io.socket.emit("updateMessage", data);
     } else if (sender_id === socket.id) {
       // 나에게
       socket.emit("updateMessage", data);
