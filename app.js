@@ -11,41 +11,68 @@ var indexRouter = require("./routes/index"); // ('./routes')과 동일
 var usersRouter = require("./routes/users");
 
 var app = express(); // app 변수 객체
-app.io = require("socket.io")(); // socket
-//이벤트는 emit(‘event’)으로 전달하면 on(‘event’)으로 받음
+app.io = require("socket.io")(); // socket 객체
+var login = []; // 접속한 객체를 받는 배열
+
+// 이벤트는 emit(‘event’)으로 전달하면 on(‘event’)으로 받음
 
 // 'connection'이벤트 소켓이 연결되면 호출, 'socket' 파라미터는 접속된 해당 소켓의 객체
 // 파라미터 socket connection에 대한 정보를 가지고 있어 이를 이용해 event listener를 만듦
 app.io.on("connection", (socket) => {
   console.log("socket connect!");
-
+  // 새로운 접속이 발생 시
   socket.on("newUserConnect", (name) => {
+    let s_id = socket.id;
     socket.name = name;
     var message = name + "님이 접속했습니다.";
+
+    // 접속한 객체를 배열에 넣음
+    login.push({ id: s_id, name: name });
+    console.log(login);
+
     //'updateMessage'  이벤트 호출
+    // 'app.io.sockets' 객체 : 나를 포함한 전체 소켓, 'app.io'와 동일
+    // emit 메서드를 통해 'updateMessage' 이벤트 호출
     app.io.sockets.emit("updateMessage", {
-      // 'app.io.sockets' 객체 : 나를 포함한 전체 소켓
-      // emit 메서드를 통해 'updateMessage' 이벤트 호출
+      type: "connect",
       name: "SERVER",
       message: message,
+      id: s_id,
+      login: login,
     });
   });
 
   socket.on("disconnect", () => {
     console.log("socket disconnect!");
+
+    // 접속을 해제한 객체에 대하여 배열에서 삭제
+    login = login.filter((login) => login.id != socket.id);
+    console.log(login);
+
     var message = socket.name + "님이 퇴장했습니다.";
+    // 'socket.broadcast' 객체 : 나를 제외한 전체 소켓
     socket.broadcast.emit("updateMessage", {
-      // 'socket.broadcast' 객체 : 나를 제외한 전체 소켓
+      type: "disconnect",
       name: "SERVER",
       message: message,
     });
   });
 
   socket.on("sendMessage", (data) => {
-    // socket.name는 newUserConnect에서 저장함
-    data.name = socket.name;
-    app.io.emit("updateMessage", data);
+    data.name = socket.name; // socket.name는 newUserConnect에서 저장함
+    let sender_id = data.id; // 발송 대상의 socket id 값
+
     // 'updateMessage'의 데이터 구조에 맞게 name값 담아서 'updateMessage' 호출
+    if (sender_id === "ALL") {
+      // 모두에게
+      app.io.emit("updateMessage", data);
+    } else if (sender_id === socket.id) {
+      // 나에게
+      socket.emit("updateMessage", data);
+    } else {
+      // 특정 대상에게
+      socket.to(sender_id).emit("updateMessage", data);
+    }
   });
 });
 
